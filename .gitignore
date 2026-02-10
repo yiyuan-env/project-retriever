@@ -1,0 +1,23 @@
+node_modules/
+.env
+*.log
+*.html
+*.txt
+*.json
+!package.json
+!package-lock.json
+!tb_keyword_forms.json
+!tb_links.json
+# Keep the search result data if needed, but usually we don't commit them
+# For now, let's exclude them to keep the repo clean
+tb_links.json
+tb_keyword_forms.json
+tb_detail.txt
+pcc_content.txt
+tb_search_results.html
+tender_report.html
+tb_query_keyword.html
+tb_query_date.html
+tb_home.html
+debug_tb_dump.html
+pcc_detail_test.html

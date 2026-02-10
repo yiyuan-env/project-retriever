@@ -1,0 +1,24 @@
+{
+    "name": "project-retriever",
+    "version": "1.0.0",
+    "description": "Scrapes government websites for environmental projects and sends email notifications.",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "scraper",
+        "puppeteer",
+        "government",
+        "taiwan"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "dotenv": "^16.4.5",
+        "node-cron": "^3.0.3",
+        "node-notifier": "^10.0.1",
+        "puppeteer": "^22.8.0"
+    }
+}
