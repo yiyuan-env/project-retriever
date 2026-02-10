@@ -41,12 +41,12 @@ async function runTask() {
 // Run immediately on start for testing
 runTask();
 
-// Schedule to run every day at 9:00 AM
-cron.schedule('0 9 * * *', () => {
+// Schedule to run every day at 10:00 AM
+cron.schedule('0 10 * * *', () => {
     runTask();
 });
 
-// Schedule to run every day at 2:00 PM (14:00)
-cron.schedule('0 14 * * *', () => {
+// Schedule to run every day at 4:00 PM (16:00)
+cron.schedule('0 16 * * *', () => {
     runTask();
 });
