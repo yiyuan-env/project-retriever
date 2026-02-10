@@ -13,14 +13,16 @@ function sendNotification(projects, reportPath = null) {
         title: 'Project Retriever',
         message: message,
         sound: true,
-        wait: true
-    });
-
-    // Handle clicks
-    notifier.on('click', () => {
-        if (reportPath) {
-            console.log(`Opening report: ${reportPath}`);
-            exec(`start "" "${reportPath}"`);
+        wait: true,
+        timeout: 30 // Keep the notification in action center longer
+    }, (err, response, metadata) => {
+        // This callback is more reliable on Windows
+        // response can be 'click', 'timeout', etc.
+        if (response === 'activate' || response === 'click') {
+            if (reportPath) {
+                console.log(`Opening report: ${reportPath}`);
+                exec(`start "" "${reportPath}"`);
+            }
         }
     });
 
