@@ -1,29 +1,28 @@
 const notifier = require('node-notifier');
 const { exec } = require('child_process');
 
-function sendNotification(projects, reportPath = null) {
+async function sendNotification(projects, reportPath = null) {
     if (!projects || projects.length === 0) return;
 
     const count = projects.length;
+
+    // Auto-open the report in the browser immediately
+    if (reportPath) {
+        console.log(`Opening report in browser: ${reportPath}`);
+        exec(`start "" "${reportPath}"`);
+    }
+
+    // Send a desktop notification as an alert
     const message = reportPath
-        ? `Found ${count} new environmental projects!\nClick this notification to view the report.`
+        ? `Found ${count} new environmental projects!\nReport has been opened in your browser.`
         : `Found ${count} new environmental projects!\nDetails in console.`;
 
     notifier.notify({
         title: 'Project Retriever',
         message: message,
         sound: true,
-        wait: true,
-        timeout: 30 // Keep the notification in action center longer
-    }, (err, response, metadata) => {
-        // This callback is more reliable on Windows
-        // response can be 'click', 'timeout', etc.
-        if (response === 'activate' || response === 'click') {
-            if (reportPath) {
-                console.log(`Opening report: ${reportPath}`);
-                exec(`start "" "${reportPath}"`);
-            }
-        }
+        wait: false,
+        timeout: 30
     });
 
     console.log('\n=============================================');
