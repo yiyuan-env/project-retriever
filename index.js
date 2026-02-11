@@ -3,6 +3,7 @@ const notifier = require('node-notifier');
 const { scrapePCC } = require('./scrapers/pcc');
 const { sendNotification } = require('./utils/notifier');
 const { generateHtmlReport } = require('./utils/reporter');
+const { markNewProjects } = require('./utils/seen_tracker');
 require('dotenv').config();
 
 // Keywords provided by user
@@ -29,19 +30,24 @@ async function runTask() {
 
         const allProjects = [...pccProjects];
 
+        console.log('[2/4] Checking for new projects...');
+        const { newCount } = markNewProjects(allProjects);
+        console.log(`      ✔ ${newCount} new, ${allProjects.length - newCount} previously seen.`);
+        console.log('');
+
         console.log('========================================');
-        console.log(`[2/3] Total projects found: ${allProjects.length}`);
+        console.log(`[3/4] Total: ${allProjects.length} projects (${newCount} new)`);
         console.log('========================================');
         console.log('');
 
         if (allProjects.length > 0) {
-            console.log('[3/3] Generating report & sending notification...');
+            console.log('[4/4] Generating report & sending notification...');
             const reportPath = generateHtmlReport(allProjects);
             console.log(`      ✔ Report generated: ${reportPath}`);
-            await sendNotification(allProjects, reportPath);
+            await sendNotification(allProjects, reportPath, newCount);
             console.log('      ✔ Notification sent!');
         } else {
-            console.log('[3/3] No matching projects found today.');
+            console.log('[4/4] No matching projects found today.');
             // Still send a notification so the user knows the task completed
             notifier.notify({
                 title: 'Project Retriever',

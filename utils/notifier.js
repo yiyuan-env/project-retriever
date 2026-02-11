@@ -1,7 +1,7 @@
 const notifier = require('node-notifier');
 const { exec } = require('child_process');
 
-async function sendNotification(projects, reportPath = null) {
+async function sendNotification(projects, reportPath = null, newCount = 0) {
     if (!projects || projects.length === 0) return;
 
     const count = projects.length;
@@ -12,10 +12,13 @@ async function sendNotification(projects, reportPath = null) {
         exec(`start "" "${reportPath}"`);
     }
 
-    // Send a desktop notification as an alert
-    const message = reportPath
-        ? `Found ${count} new environmental projects!\nReport has been opened in your browser.`
-        : `Found ${count} new environmental projects!\nDetails in console.`;
+    // Build notification message with new count info
+    let message;
+    if (newCount > 0) {
+        message = `Found ${count} projects (${newCount} new!).\nReport has been opened in your browser.`;
+    } else {
+        message = `Found ${count} projects (all previously seen).\nReport has been opened in your browser.`;
+    }
 
     notifier.notify({
         title: 'Project Retriever',
@@ -26,9 +29,10 @@ async function sendNotification(projects, reportPath = null) {
     });
 
     console.log('\n=============================================');
-    console.log(`[ALERT] Found ${count} New Projects:`);
+    console.log(`[ALERT] Found ${count} Projects (${newCount} new):`);
     projects.forEach((p, index) => {
-        console.log(`${index + 1}. ${p.title}`);
+        const badge = p.isNew ? '🆕' : '  ';
+        console.log(`${badge} ${index + 1}. ${p.title}`);
         console.log(`   Source: ${p.source}`);
         console.log(`   Link: ${p.url}`);
     });
@@ -36,3 +40,4 @@ async function sendNotification(projects, reportPath = null) {
 }
 
 module.exports = { sendNotification };
+

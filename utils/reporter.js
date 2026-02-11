@@ -6,11 +6,17 @@ function generateHtmlReport(projects) {
     const timestamp = new Date().toLocaleString();
     const filePath = path.join(process.cwd(), 'tender_report.html');
 
+    const newCount = projects.filter(p => p.isNew).length;
+    const seenCount = projects.length - newCount;
+
     const tableRows = projects.map(p => {
         const sourceDisplay = p.source === 'PCC' ? '政府電子採購網' : '台灣採購公報網';
         const tagClass = p.source === 'PCC' ? 'tag-pcc' : 'tag-tb';
+        const newBadge = p.isNew ? '<span class="new-badge">🆕 NEW</span>' : '';
+        const rowClass = p.isNew ? 'new-row' : '';
         return `
-                <tr>
+                <tr class="${rowClass}">
+                    <td>${newBadge}</td>
                     <td><span class="source-tag ${tagClass}">${sourceDisplay}</span></td>
                     <td>${p.agency || '-'}</td>
                     <td><a href="${p.url}" class="project-link" target="_blank">${p.title}</a></td>
@@ -121,16 +127,64 @@ function generateHtmlReport(projects) {
             border-radius: 12px;
             font-size: 1.2em;
         }
+        .new-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            background-color: #48bb78;
+            color: white;
+            white-space: nowrap;
+        }
+        .new-row {
+            background-color: #f0fff4 !important;
+            border-left: 4px solid #48bb78;
+        }
+        .new-row:hover {
+            background-color: #e6ffed !important;
+        }
+        .summary-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 15px 0;
+        }
+        .summary-item {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        .summary-new {
+            background-color: #48bb78;
+            color: white;
+        }
+        .summary-seen {
+            background-color: #e2e8f0;
+            color: #4a5568;
+        }
+        .summary-total {
+            background-color: #3498db;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <h1>政府標案報表（Taiwan Tender Report）</h1>
-    <p class="meta">報表產生時間: ${timestamp} | 共找到 ${projects.length} 件潛在標案。</p>
+    <p class="meta">報表產生時間: ${timestamp}</p>
+    <div class="summary-bar">
+        <span class="summary-item summary-total">共 ${projects.length} 件標案</span>
+        <span class="summary-item summary-new">🆕 ${newCount} 件新標案</span>
+        <span class="summary-item summary-seen">${seenCount} 件已看過</span>
+    </div>
 
     ${projects.length === 0 ? '<div class="no-results">本次掃描未發現符合關鍵字的進行中標案。</div>' : `
     <table>
         <thead>
             <tr>
+                <th style="width: 80px;">狀態</th>
                 <th>來源</th>
                 <th>機關</th>
                 <th>標案名稱</th>
