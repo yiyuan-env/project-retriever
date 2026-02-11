@@ -1,7 +1,7 @@
 @echo off
 title Project Retriever
 color 0A
-cd /d "c:\project-retriever"
+cd /d "%~dp0"
 
 echo ================================================
 echo        Project Retriever - Manual Run
@@ -15,7 +15,7 @@ echo.
 echo ================================================
 echo.
 
-"C:\Program Files\nodejs\node.exe" index.js --once
+node index.js --once
 
 echo.
 echo ================================================

@@ -1,59 +1,68 @@
-# 🚀 政府標案自動追蹤工具 (Project Retriever) 安裝指南
+# 🚀 政府標案自動追蹤工具 (Project Retriever)
 
-本工具會自動檢查政府電子採購網 (**PCC**) 和 **TaiwanBuying**，如有符合關鍵字的標案，將會直接在您的電腦桌面發出通知。
+本工具會自動檢查**政府電子採購網 (PCC)**，搜尋符合環境教育相關關鍵字的標案，並在您的電腦桌面發出通知及自動開啟報告。
 
 ## 📋 準備工作
 
-執行本程式之前，請確保您的電腦已安裝 **Node.js**。
-- **下載 Node.js**: [https://nodejs.org/](https://nodejs.org/) (請下載 **LTS** 版本)。
+執行本程式前，請確保您的電腦已安裝 **Node.js**：
+- **下載 Node.js**: [https://nodejs.org/](https://nodejs.org/) (請下載 **LTS** 版本)
 
-## 🛠️ 安裝步驟
+## 🛠️ 快速安裝（一鍵設定）
 
-1.  **複製專案資料夾**: 
-    - 您可以從 GitHub 複製：`git clone https://github.com/yiyuan-env/project-retriever.git`
-    - 或將整個 `project-retriever` 資料夾複製到您的電腦。
-2.  **設定環境變數**:
-    - 在資料夾中找到 `.env.example` 檔案。
-    - 將其重新命名為 `.env`。
-    - (選填) 如果需要郵件通知，請在 `.env` 中填入您的 Email 設定。
-3.  **開啟終端機 (Terminal)**:
-    - 在資料夾路徑輸入 `cmd` 或按 `Win + R` 輸入 `cmd`。
-    - 切換至專案資料夾。
-4.  **安裝必要元件**: 輸入以下指令：
-    ```bash
-    npm install
-    ```
+1. 從 GitHub 下載 ZIP 檔案並解壓縮到任意資料夾
+2. 雙擊 **`setup.bat`**
+
+安裝程式會自動完成以下步驟：
+- ✅ 檢查 Node.js 是否已安裝
+- ✅ 安裝所有必要的套件 (`npm install`)
+- ✅ 建立 `.env` 設定檔
+- ✅ 在桌面建立「**Project Retriever**」捷徑
 
 ## 🏃 如何執行
 
-啟動追蹤程式，請輸入：
-```bash
-node index.js
+安裝完成後，有兩種方式可以執行：
+
+### 方法一：桌面快捷鍵（推薦）
+雙擊桌面上的 **「Project Retriever」** 捷徑。
+
+### 方法二：手動執行
+雙擊資料夾中的 **`run_retriever.bat`** 檔案。
+
+執行時您會看到即時進度：
 ```
-程式啟動後將會：
-- **立即執行** 一次掃描。
-- 自動設定為每天 **上午 10:00** 和 **下午 4:00** 執行。
-- **請保持此終端機視窗開啟**，程式才能按時自動執行。
+[1/3] Scraping PCC (政府電子採購網)...
+      ✔ PCC done. Found 12 projects.
+
+[2/3] Total projects found: 12
+
+[3/3] Generating report & sending notification...
+      ✔ Report generated!
+      ✔ Notification sent!
+
+ ✔ All done!
+```
 
 ## 🔔 通知與報告說明
 
-- 當發現符合關鍵字的標案時，您的桌面右下角會出現彈出通知。
-- **點擊通知**: 點擊後會自動在瀏覽器開啟詳細的 HTML 報告。
-- **手動查看**: 您也可以隨時開啟資料夾中的 `tender_report.html` 檔案來查看最新的搜尋結果。
+- 掃描完成後，桌面右下角會出現通知彈窗
+- HTML 報告會**自動在瀏覽器中開啟**
+- 您也可以隨時開啟資料夾中的 `tender_report.html` 查看最新結果
 
-## ⚙️ 自定義設定 (進階)
+## ⚙️ 自定義設定（進階）
 
-- **關鍵字**: 開啟 `index.js`，編輯最上方的 `KEYWORDS` 清單。
-- **自動執行時間**: 開啟 `index.js`，編輯底部的 `cron.schedule` 時間（請使用 24 小時制）。
+- **關鍵字**: 開啟 `index.js`，編輯最上方的 `KEYWORDS` 清單
+- **自動執行時間**: 開啟 `index.js`，編輯底部的 `cron.schedule` 時間（24 小時制）
+- **Email 通知**: 編輯 `.env` 檔案填入 Email 設定
 
-## ❓ 常見問題：沒看到桌面通知？
+## ❓ 常見問題
 
-如果程式有跑但沒看到右下角通知，請檢查 Windows 設定：
+### 沒看到桌面通知？
+1. `設定` > `系統` > `通知` → 確保通知是**開啟**的
+2. 確保**專注模式 / 請勿打擾**是關閉的
+3. 確保 `node.exe` 有發送通知的權限
 
-1.  **開啟通知切換**: 到 `設定` > `系統` > `通知`，確保 **「從應用程式及其他傳送者取得通知」** 是 **開啟** 的。
-2.  **關閉專注模式**: 確保 Windows 的 **「專注輔助」** 或 **「請勿打擾」** 模式是 **關閉** 的（這會擋掉所有通知）。
-3.  **背景權限**: 確保 `node.exe` (Node.js) 有權限發送通知。
-4.  **首次執行**: 有時候 Windows 需要在該程式發出第一次通知後，才會出現在通知設定清單中提供進階設定。
+### setup.bat 顯示 "Node.js is not installed"？
+請先到 [nodejs.org](https://nodejs.org/) 下載安裝 Node.js LTS 版本，安裝後重新執行 `setup.bat`。
 
 ---
 *由 Antigravity 產生*
