@@ -21,7 +21,7 @@ function generateHtmlReport(projects) {
                     <td>${p.agency || '-'}</td>
                     <td><a href="${p.url}" class="project-link" target="_blank">${p.title}</a></td>
                     <td class="amount">${p.budget || '-'}</td>
-                    <td class="date-cell">${p.publishDate || '-'}</td>
+                    <td class="date-cell" data-date="${p.publishDate || ''}">${p.publishDate || '-'}</td>
                     <td class="date-cell">${p.endDate || p.date || '-'}</td>
                 </tr>
                 `;
@@ -144,6 +144,18 @@ function generateHtmlReport(projects) {
         .new-row:hover {
             background-color: #e6ffed !important;
         }
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+        th.sortable:hover {
+            background-color: #2980b9;
+        }
+        th.sortable .sort-icon {
+            margin-left: 6px;
+            font-style: normal;
+            opacity: 0.7;
+        }
         .summary-bar {
             display: flex;
             justify-content: center;
@@ -189,7 +201,7 @@ function generateHtmlReport(projects) {
                 <th>機關</th>
                 <th>標案名稱</th>
                 <th style="text-align: right;">預算金額</th>
-                <th>公告日</th>
+                <th class="sortable">公告日<span class="sort-icon">⇅</span></th>
                 <th>截止投標日期</th>
             </tr>
         </thead>
@@ -198,6 +210,30 @@ function generateHtmlReport(projects) {
         </tbody>
     </table>
     `}
+
+<script>
+(function() {
+    var th = document.querySelector('th.sortable');
+    if (!th) return;
+    var icon = th.querySelector('.sort-icon');
+    var asc = true;
+    th.addEventListener('click', function() {
+        var tbody = document.querySelector('tbody');
+        if (!tbody) return;
+        var rows = Array.from(tbody.querySelectorAll('tr'));
+        rows.sort(function(a, b) {
+            var da = a.querySelector('td[data-date]') ? a.querySelector('td[data-date]').getAttribute('data-date') : '';
+            var db = b.querySelector('td[data-date]') ? b.querySelector('td[data-date]').getAttribute('data-date') : '';
+            if (!da) return 1;
+            if (!db) return -1;
+            return asc ? da.localeCompare(db) : db.localeCompare(da);
+        });
+        rows.forEach(function(r) { tbody.appendChild(r); });
+        icon.textContent = asc ? '▲' : '▼';
+        asc = !asc;
+    });
+})();
+</script>
 
 </body>
 </html>
