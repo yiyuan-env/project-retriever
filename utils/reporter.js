@@ -15,7 +15,7 @@ function generateHtmlReport(projects) {
         const newBadge = p.isNew ? '<span class="new-badge">🆕 NEW</span>' : '';
         const rowClass = p.isNew ? 'new-row' : '';
         return `
-                <tr class="${rowClass}">
+                <tr class="${rowClass}" data-url="${p.url}">
                     <td>${newBadge}</td>
                     <td><span class="source-tag ${tagClass}">${sourceDisplay}</span></td>
                     <td>${p.agency || '-'}</td>
@@ -137,6 +137,16 @@ function generateHtmlReport(projects) {
             color: white;
             white-space: nowrap;
         }
+        .seen-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            background-color: #a0aec0;
+            color: white;
+            white-space: nowrap;
+        }
         .new-row {
             background-color: #f0fff4 !important;
             border-left: 4px solid #48bb78;
@@ -188,8 +198,8 @@ function generateHtmlReport(projects) {
     <p class="meta">報表產生時間: ${timestamp}</p>
     <div class="summary-bar">
         <span class="summary-item summary-total">共 ${projects.length} 件標案</span>
-        <span class="summary-item summary-new">🆕 ${newCount} 件新標案</span>
-        <span class="summary-item summary-seen">${seenCount} 件已看過</span>
+        <span class="summary-item summary-new">🆕 <span id="summary-new-count">${newCount}</span> 件新標案</span>
+        <span class="summary-item summary-seen"><span id="summary-seen-count" data-server-seen="${seenCount}">${seenCount}</span> 件已看過</span>
     </div>
 
     ${projects.length === 0 ? '<div class="no-results">本次掃描未發現符合關鍵字的進行中標案。</div>' : `
@@ -231,6 +241,63 @@ function generateHtmlReport(projects) {
         rows.forEach(function(r) { tbody.appendChild(r); });
         icon.textContent = asc ? '▲' : '▼';
         asc = !asc;
+    });
+})();
+
+// --- Click-to-mark-seen ---
+(function() {
+    var STORAGE_KEY = 'pr_seen_urls';
+
+    function getSeenUrls() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { return []; }
+    }
+
+    function addSeenUrl(url) {
+        var seen = getSeenUrls();
+        if (seen.indexOf(url) === -1) { seen.push(url); }
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(seen)); } catch(e) {}
+    }
+
+    function markRowSeen(row) {
+        var badge = row.querySelector('.new-badge');
+        if (badge) {
+            badge.className = 'seen-badge';
+            badge.textContent = '\u2705 \u5df2\u770b';
+        }
+        row.classList.remove('new-row');
+        updateSummaryCounters();
+    }
+
+    function updateSummaryCounters() {
+        var newEl = document.getElementById('summary-new-count');
+        var seenEl = document.getElementById('summary-seen-count');
+        if (!newEl || !seenEl) return;
+        
+        var currentNew = document.querySelectorAll('.new-badge').length;
+        var currentChecked = document.querySelectorAll('.seen-badge').length;
+        var serverSeen = parseInt(seenEl.getAttribute('data-server-seen') || '0');
+        
+        newEl.textContent = currentNew;
+        seenEl.textContent = serverSeen + currentChecked;
+    }
+
+    // On page load: restore clicked state from localStorage
+    var seenUrls = getSeenUrls();
+    document.querySelectorAll('tr[data-url]').forEach(function(row) {
+        var url = row.getAttribute('data-url');
+        if (seenUrls.indexOf(url) !== -1) { markRowSeen(row); }
+    });
+    updateSummaryCounters();
+
+    // On link click: save to localStorage and update badge
+    document.querySelectorAll('tr[data-url] a.project-link').forEach(function(link) {
+        link.addEventListener('click', function() {
+            var row = link.closest('tr[data-url]');
+            if (!row) return;
+            var url = row.getAttribute('data-url');
+            addSeenUrl(url);
+            markRowSeen(row);
+        });
     });
 })();
 </script>
