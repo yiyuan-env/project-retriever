@@ -23,6 +23,9 @@ async function scrapePCC(keywords) {
     await page.setUserAgent(userAgents[Math.floor(Math.random() * userAgents.length)]);
     await page.setViewport({ width: 1920, height: 1080 });
 
+    // Use a Map to collect unique projects by URL across all keywords
+    const uniqueProjectsMap = new Map();
+
     try {
         for (const keyword of keywords) {
             console.log(`Searching PCC for: ${keyword}`);
@@ -108,101 +111,108 @@ async function scrapePCC(keywords) {
                     return isFuture;
                 });
 
-                console.log(`PCC: Found ${activeItems.length} active matches for "${keyword}". Fetching details selectively...`);
-
-                const finalItems = [];
-                // For each active item, fetch details selectively.
+                let newCount = 0;
                 for (const item of activeItems) {
-                    if (!item.needsDetail) {
-                        console.log(`PCC: Skipping detail for "${item.title}" (Date/Budget already found)`);
-                        finalItems.push(item);
-                        continue;
+                    if (!uniqueProjectsMap.has(item.url)) {
+                        uniqueProjectsMap.set(item.url, item);
+                        newCount++;
                     }
-
-                    let retryCount = 0;
-                    let success = false;
-
-                    // Set Referer to seem more like a real user flow
-                    await page.setExtraHTTPHeaders({ 'Referer': targetUrl });
-
-                    while (retryCount < 2 && !success) {
-                        try {
-                            // Randomized human-like delay
-                            const delay = 1000 + Math.random() * 1000;
-                            await new Promise(r => setTimeout(r, delay));
-
-                            if (retryCount > 0) {
-                                console.log(`PCC: Retrying detail fetch for ${item.title} (Attempt ${retryCount + 1})...`);
-                                await page.setUserAgent(userAgents[Math.floor(Math.random() * userAgents.length)]);
-                            }
-
-                            // Navigate to detail with short timeout
-                            await page.goto(item.url, { waitUntil: 'domcontentloaded', timeout: 15000 });
-
-                            // Check if blocked or empty
-                            const pageInfo = await page.evaluate(() => {
-                                const text = document.body.innerText;
-                                const isBlocked = text.includes('blocked') || text.includes('B區') || text.includes('遊戲');
-                                const isEmpty = text.trim().length < 100;
-                                return { isBlocked, isEmpty };
-                            });
-
-                            if (pageInfo.isBlocked || pageInfo.isEmpty) {
-                                retryCount++;
-                                continue;
-                            }
-
-                            const details = await page.evaluate(() => {
-                                const res = { budget: '', openTime: '', publishDate: '' };
-                                const rows = Array.from(document.querySelectorAll('tr'));
-                                rows.forEach(tr => {
-                                    const th = tr.querySelector('th');
-                                    const td = tr.querySelector('td');
-                                    if (th && td) {
-                                        const key = th.innerText.trim();
-                                        const val = td.innerText.trim();
-                                        if (key.includes('預算金額')) res.budget = val;
-                                        if (key.includes('開標時間')) res.openTime = val;
-                                        // Priority on original announcement date
-                                        if (key.includes('本案公告日期')) res.publishDate = val.split('\n')[0].trim();
-                                        if (!res.publishDate && key === '公告日') res.publishDate = val.split('\n')[0].trim();
-                                    }
-                                });
-                                return res;
-                            });
-
-                            // Update endDate to include full time if found
-                            if (details.openTime) {
-                                item.endDate = details.openTime;
-                            }
-                            // Update publish date from detail if available (more accurate for corrections)
-                            if (details.publishDate) {
-                                item.publishDate = details.publishDate;
-                            }
-                            // If budget from list was empty or generic, use the detail one
-                            if (details.budget && (!item.budget || isNaN(parseFloat(item.budget.replace(/,/g, ''))))) {
-                                item.budget = details.budget;
-                            }
-                            success = true;
-                        } catch (detailErr) {
-                            console.log(`PCC: Detail fetch error for ${item.title}: ${detailErr.message}`);
-                            retryCount++;
-                        }
-                    }
-
-                    if (!success) {
-                        console.log(`PCC: Falling back to list data for ${item.title} after retries.`);
-                    }
-
-                    finalItems.push(item);
                 }
-
-                finalResults.push(...finalItems);
+                console.log(`PCC: Found ${activeItems.length} active matches for "${keyword}" (${newCount} new unique, ${activeItems.length - newCount} duplicates skipped).`);
                 await new Promise(r => setTimeout(r, 2000));
 
             } catch (err) {
                 console.error(`Error searching for ${keyword}:`, err);
             }
+        }
+
+        // Now perform detail fetching once per unique project
+        const uniqueItems = Array.from(uniqueProjectsMap.values());
+        console.log(`PCC: Total unique projects before detail fetch: ${uniqueItems.length}. Fetching details selectively...`);
+
+        for (const item of uniqueItems) {
+            if (!item.needsDetail) {
+                console.log(`PCC: Skipping detail for "${item.title}" (Date/Budget already found)`);
+                finalResults.push(item);
+                continue;
+            }
+
+            let retryCount = 0;
+            let success = false;
+
+            // Set Referer to seem more like a real user flow
+            await page.setExtraHTTPHeaders({ 'Referer': item.url });
+
+            while (retryCount < 2 && !success) {
+                try {
+                    // Randomized human-like delay
+                    const delay = 1000 + Math.random() * 1000;
+                    await new Promise(r => setTimeout(r, delay));
+
+                    if (retryCount > 0) {
+                        console.log(`PCC: Retrying detail fetch for ${item.title} (Attempt ${retryCount + 1})...`);
+                        await page.setUserAgent(userAgents[Math.floor(Math.random() * userAgents.length)]);
+                    }
+
+                    // Navigate to detail with short timeout
+                    await page.goto(item.url, { waitUntil: 'domcontentloaded', timeout: 15000 });
+
+                    // Check if blocked or empty
+                    const pageInfo = await page.evaluate(() => {
+                        const text = document.body.innerText;
+                        const isBlocked = text.includes('blocked') || text.includes('B區') || text.includes('遊戲');
+                        const isEmpty = text.trim().length < 100;
+                        return { isBlocked, isEmpty };
+                    });
+
+                    if (pageInfo.isBlocked || pageInfo.isEmpty) {
+                        retryCount++;
+                        continue;
+                    }
+
+                    const details = await page.evaluate(() => {
+                        const res = { budget: '', openTime: '', publishDate: '' };
+                        const rows = Array.from(document.querySelectorAll('tr'));
+                        rows.forEach(tr => {
+                            const th = tr.querySelector('th');
+                            const td = tr.querySelector('td');
+                            if (th && td) {
+                                const key = th.innerText.trim();
+                                const val = td.innerText.trim();
+                                if (key.includes('預算金額')) res.budget = val;
+                                if (key.includes('開標時間')) res.openTime = val;
+                                // Priority on original announcement date
+                                if (key.includes('本案公告日期')) res.publishDate = val.split('\n')[0].trim();
+                                if (!res.publishDate && key === '公告日') res.publishDate = val.split('\n')[0].trim();
+                            }
+                        });
+                        return res;
+                    });
+
+                    // Update endDate to include full time if found
+                    if (details.openTime) {
+                        item.endDate = details.openTime;
+                    }
+                    // Update publish date from detail if available (more accurate for corrections)
+                    if (details.publishDate) {
+                        item.publishDate = details.publishDate;
+                    }
+                    // If budget from list was empty or generic, use the detail one
+                    if (details.budget && (!item.budget || isNaN(parseFloat(item.budget.replace(/,/g, ''))))) {
+                        item.budget = details.budget;
+                    }
+                    success = true;
+                } catch (detailErr) {
+                    console.log(`PCC: Detail fetch error for ${item.title}: ${detailErr.message}`);
+                    retryCount++;
+                }
+            }
+
+            if (!success) {
+                console.log(`PCC: Falling back to list data for ${item.title} after retries.`);
+            }
+
+            finalResults.push(item);
         }
 
     } catch (error) {

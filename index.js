@@ -30,21 +30,25 @@ async function runTask() {
 
         const allProjects = [...pccProjects];
 
+        // Deduplicate by URL (safety net in case multiple scrapers return the same project)
+        const uniqueByUrl = Array.from(new Map(allProjects.map(p => [p.url, p])).values());
+
         console.log('[2/4] Checking for new projects...');
-        const { newCount } = markNewProjects(allProjects);
-        console.log(`      ✔ ${newCount} new, ${allProjects.length - newCount} previously seen.`);
+        const { newCount } = markNewProjects(uniqueByUrl);
+        console.log(`      ✔ ${newCount} new, ${uniqueByUrl.length - newCount} previously seen.`);
+
         console.log('');
 
         console.log('========================================');
-        console.log(`[3/4] Total: ${allProjects.length} projects (${newCount} new)`);
+        console.log(`[3/4] Total: ${uniqueByUrl.length} projects (${newCount} new)`);
         console.log('========================================');
         console.log('');
 
-        if (allProjects.length > 0) {
+        if (uniqueByUrl.length > 0) {
             console.log('[4/4] Generating report & sending notification...');
-            const reportPath = generateHtmlReport(allProjects);
+            const reportPath = generateHtmlReport(uniqueByUrl);
             console.log(`      ✔ Report generated: ${reportPath}`);
-            await sendNotification(allProjects, reportPath, newCount);
+            await sendNotification(uniqueByUrl, reportPath, newCount);
             console.log('      ✔ Notification sent!');
         } else {
             console.log('[4/4] No matching projects found today.');
