@@ -23,6 +23,17 @@ async function scrapePCC(keywords) {
     await page.setUserAgent(userAgents[Math.floor(Math.random() * userAgents.length)]);
     await page.setViewport({ width: 1920, height: 1080 });
 
+    // --- Performance Optimization: Intercept & Block Unnecessary Assets ---
+    await page.setRequestInterception(true);
+    page.on('request', (request) => {
+        const type = request.resourceType();
+        if (['image', 'stylesheet', 'font', 'media'].includes(type)) {
+            request.abort();
+        } else {
+            request.continue();
+        }
+    });
+
     // Use a Map to collect unique projects by URL across all keywords
     const uniqueProjectsMap = new Map();
 

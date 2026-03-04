@@ -10,8 +10,8 @@ function generateHtmlReport(projects) {
     const seenCount = projects.length - newCount;
 
     const tableRows = projects.map(p => {
-        const sourceDisplay = p.source === 'PCC' ? '政府電子採購網' : '台灣採購公報網';
-        const tagClass = p.source === 'PCC' ? 'tag-pcc' : 'tag-tb';
+        const sourceDisplay = '政府電子採購網';
+        const tagClass = 'tag-pcc';
         const newBadge = p.isNew ? '<span class="new-badge">🆕 NEW</span>' : '';
         const rowClass = p.isNew ? 'new-row' : '';
         return `
@@ -101,7 +101,6 @@ function generateHtmlReport(projects) {
             color: white;
         }
         .tag-pcc { background-color: #2c3e50; }
-        .tag-tb { background-color: #8e44ad; }
         .amount {
             color: #e53e3e;
             font-weight: 700;

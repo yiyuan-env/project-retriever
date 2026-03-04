@@ -23,9 +23,13 @@ async function runTask() {
     console.log('');
 
     try {
-        console.log('[1/3] Scraping PCC (政府電子採購網)...');
+        console.log('[1/4] Starting scraper...');
+
         const pccProjects = await scrapePCC(KEYWORDS);
-        console.log(`      ✔ PCC done. Found ${pccProjects.length} projects.`);
+
+        console.log('');
+        console.log('--- Scraping Results ---');
+        console.log(`PCC: ${pccProjects.length} projects`);
         console.log('');
 
         const allProjects = [...pccProjects];
